@@ -1,61 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import tiktoken
 
 torch.manual_seed(32)
-tokenizer = tiktoken.get_encoding("gpt2")
-txt1 = "Every effort moves you"
-txt2 = "Every day holds a"
-
-batch = []
-batch.append(torch.tensor(tokenizer.encode(txt1)))
-batch.append(torch.tensor(tokenizer.encode(txt2)))
-
-batch = torch.stack(batch, dim=0)
-print(batch)
-
-GPT2_SMALL = {
-        "vocab_size": 50257,
-        "context": 1024,
-        "emb_dim": 768,
-        "n_heads": 12,
-        "n_layers": 12,
-        "dropout": 0.1,
-        "qkv_bias": False
-        }
-
-GPT2_MEDIUM = {
-        "vocab_size": 50257,
-        "context": 1024,
-        "emb_dim": 1024,
-        "n_heads": 16,
-        "n_layers": 24,
-        "dropout": 0.1,
-        "qkv_bias": False
-        }
-
-GPT2_LARGE = {
-        "vocab_size": 50257,
-        "context": 1024,
-        "emb_dim": 1280,
-        "n_heads": 20,
-        "n_layers": 36,
-        "dropout": 0.1,
-        "qkv_bias": False
-        }
-
-GPT2_XL = {
-        "vocab_size": 50257,
-        "context": 1024,
-        "emb_dim": 1600,
-        "n_heads": 25,
-        "n_layers": 40,
-        "dropout": 0.1,
-        "qkv_bias": False
-        }
-
-
 
 
 class GPT(nn.Module):
@@ -204,29 +151,3 @@ class PFFN(nn.Module):
 
     def forward(self, x):
         return self.layers(x)
-
-
-def generate_text(model, idx, max_new_tokens, context):
-    for _ in range(max_new_tokens):
-        idx_cond = idx[:, -context:]
-        with torch.no_grad():
-            logits = model(idx_cond)
-
-        logits = logits[:, -1, :]
-        probs = torch.softmax(logits)
-        idx_next = torch.argmax(probs, dim=-1, keepdim=True)
-        idx = torch.cat((idx, idx_next), dim=1)
-
-    return idx
-
-
-model = GPT(GPT2_SMALL)
-
-logits = model(batch)
-print("out shape:", logits.shape)
-params = [p.numel() for p in model.parameters()]
-print(sum(params))
-print(f"{sum(params) * 4 / (1024 * 1024)} MB")
-
-
-
